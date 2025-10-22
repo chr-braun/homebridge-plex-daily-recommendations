@@ -1,0 +1,14 @@
+{
+  "accessories": [
+    {
+      "accessory": "homebridge-plex-daily-recommendations",
+      "type": "PlexDailyRecommendations",
+      "name": "Plex Empfehlungen",
+      "plexUrl": "http://192.168.178.3:32400",
+      "plexToken": "UGRWDb8BscxhByiEVL5S",
+      "machineId": "72608c6d7f50411587ca59f8a91cc5fe19e5bc78",
+      "notificationTime": "20:00",
+      "hoursBack": 24
+    }
+  ]
+}
