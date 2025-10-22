@@ -13,12 +13,25 @@
   },
   "keywords": [
     "homebridge",
+    "homebridge-plugin",
     "plex",
+    "plex-server",
     "recommendations",
-    "homekit"
+    "homekit",
+    "notifications",
+    "media",
+    "automation"
   ],
   "author": "Christian Braun",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chr-braun/homebridge-plex-daily-recommendations.git"
+  },
+  "bugs": {
+    "url": "https://github.com/chr-braun/homebridge-plex-daily-recommendations/issues"
+  },
+  "homepage": "https://github.com/chr-braun/homebridge-plex-daily-recommendations#readme",
   "dependencies": {
     "axios": "^1.6.0",
     "fast-xml-parser": "^5.3.0",
@@ -50,7 +63,7 @@
       }
     ],
     "requirements": [],
-    "documentation": "https://github.com/your-repo",
-    "changelog": "https://github.com/your-repo/blob/main/CHANGELOG.md"
+    "documentation": "https://github.com/chr-braun/homebridge-plex-daily-recommendations#readme",
+    "changelog": "https://github.com/chr-braun/homebridge-plex-daily-recommendations/blob/main/CHANGELOG.md"
   }
 }
