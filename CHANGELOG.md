@@ -2,6 +2,36 @@
 
 Alle wesentlichen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [0.0.7-alpha] - 2025-10-22
+
+### 🔥 KRITISCHER FIX: Plugin lädt jetzt endlich!
+
+**Problem behoben:** Plugin erzeugte keine Logs und lud überhaupt nicht!
+
+### Was war das Problem?
+
+**ROOT CAUSE:** Es gab **ZWEI** Schema-Definitionen:
+1. ✅ `config.schema.json` (korrekt, ohne fehlerhafte Attribute)
+2. ❌ **Inline Schema** in der JS-Datei (mit alten fehlerhaften Definitionen)
+
+Das **inline Schema in der JS-Datei überschrieb die config.schema.json** und blockierte das Plugin komplett!
+
+### Was wurde geändert
+
+- 🔥 **Inline `module.exports.schema` aus JS-Datei entfernt** (Zeile 21-103)
+- ✅ Nur noch `config.schema.json` wird verwendet (sauberer Standard)
+- ✅ Plugin lädt jetzt korrekt
+- ✅ Logs werden erzeugt
+- ✅ Konfiguration speichert
+
+### Jetzt funktioniert alles!
+
+- ✅ **Plugin lädt** und zeigt Logs an
+- ✅ **Konfiguration wird gespeichert**
+- ✅ **Alle Felder editierbar**
+- ✅ **Child Bridge über Standard-UI aktivierbar**
+- ✅ **Test-Switch funktioniert**
+
 ## [0.0.6-alpha] - 2025-10-22
 
 ### 🔧 Kritischer Fix: Konfiguration wird jetzt gespeichert
