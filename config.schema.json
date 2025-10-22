@@ -47,6 +47,20 @@
         "minimum": 1,
         "maximum": 168,
         "description": "Wie viele Stunden zurück nach neuen Inhalten suchen (1-168)"
+      },
+      "_bridge": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "pattern": "^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$"
+          },
+          "port": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          }
+        }
       }
     },
     "required": ["plexToken", "machineId"]
@@ -58,6 +72,22 @@
     },
     {
       "key": "name"
+    },
+    {
+      "key": "_bridge",
+      "notitle": true,
+      "type": "section",
+      "expandable": true,
+      "expanded": false,
+      "title": "Child Bridge Settings (Optional)",
+      "items": [
+        {
+          "type": "help",
+          "helpvalue": "<p class='help-block'>🛡️ <strong>Child Bridge aktivieren:</strong><br>Lasse dieses Plugin als separate Bridge laufen für bessere Stabilität und Performance. Homebridge generiert automatisch Username und Port.</p>"
+        },
+        "_bridge.username",
+        "_bridge.port"
+      ]
     },
     {
       "type": "fieldset",
@@ -72,6 +102,10 @@
       "expandable": true,
       "expanded": true,
       "items": ["notificationTime", "hoursBack"]
+    },
+    {
+      "type": "help",
+      "helpvalue": "<h6>🧪 Test-Benachrichtigung</h6><p>Um eine Test-Benachrichtigung zu senden, schaue in den Homebridge Logs nach der Test-URL oder verwende den Switch in der Home App um manuell zu testen.</p>"
     }
   ]
 }

@@ -213,12 +213,38 @@ class PlexSensorAccessory {
       .getCharacteristic(Characteristic.OccupancyDetected)
       .onGet(this.getOccupancyDetected.bind(this));
 
+    // Test-Switch hinzufügen für manuelle Benachrichtigungen
+    this.testSwitch =
+      this.accessory.getService("Test Benachrichtigung") ||
+      this.accessory.addService(
+        Service.Switch,
+        "Test Benachrichtigung",
+        "test-switch",
+      );
+
+    this.testSwitch
+      .getCharacteristic(Characteristic.On)
+      .onGet(() => false) // Immer aus
+      .onSet(async (value) => {
+        if (value) {
+          this.log.info("🧪 Test-Benachrichtigung manuell ausgelöst...");
+          await this.sendDailyNotification();
+          // Schalte Switch automatisch wieder aus
+          setTimeout(() => {
+            this.testSwitch.updateCharacteristic(Characteristic.On, false);
+          }, 1000);
+        }
+      });
+
     // Cron Job für tägliche Benachrichtigung
     const [hours, minutes] = this.notificationTime.split(":");
     this.cronSchedule = `${minutes} ${hours} * * *`;
 
     this.log.info(
       `✓ Cron-Job konfiguriert für tägliche Benachrichtigungen um ${this.notificationTime}`,
+    );
+    this.log.info(
+      '✓ Test-Switch verfügbar in HomeKit: "Test Benachrichtigung"',
     );
     cron.schedule(this.cronSchedule, () => this.sendDailyNotification());
 

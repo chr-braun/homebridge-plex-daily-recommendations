@@ -2,6 +2,52 @@
 
 Alle wesentlichen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [0.0.5-alpha] - 2025-10-22
+
+### ✨ Neue Features
+
+#### Child Bridge Konfiguration in GUI
+
+- **Child Bridge Settings** jetzt direkt in der GUI konfigurierbar
+- Expandierbarer Bereich "Child Bridge Settings (Optional)"
+- Homebridge generiert automatisch Username und Port
+- Bessere Sichtbarkeit der Child Bridge Option
+
+#### Test-Benachrichtigung Switch
+
+- **Neuer Switch in HomeKit**: "Test Benachrichtigung"
+- Manuelles Auslösen von Benachrichtigungen für Tests
+- Switch schaltet sich automatisch wieder aus nach Ausführung
+- Ideal zum Testen der Plex-Verbindung und Benachrichtigungen
+
+### Hinzugefügt
+
+- Test-Switch Service für manuelle Benachrichtigungstests
+- `_bridge` Konfiguration im Schema für Child Bridge Support
+- Hilfetext für Child Bridge Aktivierung
+- Automatisches Ausschalten des Test-Switch
+
+### Verbessert
+
+- Child Bridge Option ist jetzt in UI-X sichtbar
+- Logging zeigt an, dass Test-Switch verfügbar ist
+- Bessere UX für Test-Funktionalität
+
+### Nutzung
+
+**Child Bridge aktivieren:**
+
+1. Settings → Child Bridge Settings (Optional) expandieren
+2. Username und Port eintragen (oder leer lassen für Auto-Generierung)
+3. Speichern und Homebridge neu starten
+
+**Test-Benachrichtigung senden:**
+
+1. Öffne Home App
+2. Suche "Test Benachrichtigung" Switch
+3. Schalte ihn ein → Benachrichtigung wird sofort gesendet
+4. Switch schaltet sich automatisch wieder aus
+
 ## [0.0.4-alpha] - 2025-10-22
 
 ### 🔧 GUI-Konfiguration Fix
