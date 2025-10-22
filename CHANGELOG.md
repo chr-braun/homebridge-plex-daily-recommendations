@@ -2,6 +2,31 @@
 
 Alle wesentlichen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [0.0.4-alpha] - 2025-10-22
+
+### 🔧 GUI-Konfiguration Fix
+
+GUI-Konfiguration sollte jetzt endlich in Homebridge UI-X funktionieren!
+
+### Geändert
+
+- **config.schema.json**: Separate Schema-Datei erstellt (bevorzugte Methode für Homebridge UI-X)
+- **Schema-Syntax**: Korrigiert - `required` jetzt als Array auf Objektebene
+- **Schema-Format**: Integer statt number für hoursBack
+- **Header/Footer**: Hilfreiche Texte am Anfang und Ende des Config-Formulars
+
+### Hinzugefügt
+
+- Separate `config.schema.json` für bessere UI-X Kompatibilität
+- `headerDisplay` und `footerDisplay` für bessere Benutzerführung
+- Emoji in Hilfe-Text für bessere visuelle Darstellung
+
+### Behebte Probleme
+
+- GUI-Konfiguration erscheint jetzt korrekt in Homebridge UI-X
+- Required-Felder werden jetzt korrekt validiert
+- Schema folgt JSON-Schema Standard
+
 ## [0.0.3-alpha] - 2025-10-22
 
 ### ✨ Child Bridge Support
