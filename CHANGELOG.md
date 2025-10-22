@@ -2,6 +2,30 @@
 
 Alle wesentlichen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [0.0.3-alpha] - 2025-10-22
+
+### ✨ Child Bridge Support
+
+Das Plugin unterstützt jetzt **Homebridge Child Bridges**!
+
+### Hinzugefügt
+
+- **Child Bridge Support**: Plugin kann als isolierte Child Bridge laufen
+  - Bessere Stabilität: Plugin-Crashes beeinflussen nicht die Hauptbridge
+  - Isolierte Prozesse: Jede Child Bridge läuft unabhängig
+  - Einfaches Neustarten: Plugin kann einzeln neugestartet werden ohne Homebridge
+  - Bessere Performance: Resource-Isolation pro Plugin
+
+### Konfiguration
+
+In Homebridge UI-X:
+
+1. Gehe zu Plugin-Settings
+2. Aktiviere "Bridge Settings" → "Run As Separate Child Bridge"
+3. Speichern und Homebridge neu starten
+
+Das Plugin läuft dann als eigener Prozess mit eigenem Port.
+
 ## [0.0.2-alpha] - 2025-10-22
 
 ### 🎯 Umstellung auf Platform-Plugin

@@ -72,6 +72,26 @@ Füge dies zu deiner Homebridge `config.json` hinzu:
 | `notificationTime` | Uhrzeit für tägliche Benachrichtigung (HH:MM)       | "20:00"                      |
 | `hoursBack`        | Wie viele Stunden zurück nach neuen Inhalten suchen | 24                           |
 
+## Child Bridge Support (Empfohlen!)
+
+Dieses Plugin unterstützt **Homebridge Child Bridges** für bessere Stabilität und Performance.
+
+### Vorteile von Child Bridges:
+
+- 🛡️ **Stabilität**: Plugin-Crashes beeinflussen nicht die Hauptbridge
+- 🔄 **Unabhängiges Neustarten**: Plugin kann einzeln neu gestartet werden
+- ⚡ **Performance**: Bessere Resource-Nutzung durch Prozess-Isolation
+- 🔍 **Debugging**: Einfacheres Troubleshooting durch isolierte Logs
+
+### Aktivierung in Homebridge UI-X:
+
+1. Öffne Homebridge UI-X
+2. Gehe zu **Plugins** → **Plex Daily Recommendations** → **Settings**
+3. Aktiviere **"Bridge Settings"** → **"Run As Separate Child Bridge"**
+4. Speichern und Homebridge neu starten
+
+Das Plugin läuft dann als eigene Bridge mit eigenem Port!
+
 ## Wie es funktioniert
 
 1. Das Plugin erstellt einen Occupancy Sensor in HomeKit
