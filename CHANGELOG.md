@@ -2,6 +2,45 @@
 
 Alle wesentlichen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [0.0.6-alpha] - 2025-10-22
+
+### 🔧 Kritischer Fix: Konfiguration wird jetzt gespeichert
+
+**Problem behoben:** Eingaben in der GUI wurden nicht gespeichert!
+
+### Was war das Problem?
+
+- `_bridge` Objekt im Schema verhinderte das Speichern
+- `placeholder` Attribute interferierten mit dem Formular
+- `format: "uri"` Validierung zu strikt
+- Layout-Struktur war zu komplex
+
+### Was wurde geändert
+
+- ❌ `_bridge` Schema entfernt (wird automatisch von Homebridge verwaltet)
+- ❌ `placeholder` Attribute entfernt
+- ❌ `format: "uri"` entfernt
+- ✅ `form: null` hinzugefügt für sauberes Rendering
+- ✅ `name` zu required hinzugefügt
+- ✅ Layout vereinfacht und korrigiert
+- ✅ Child Bridge Info in Hilfetext verschoben
+
+### Wie aktiviere ich jetzt Child Bridge?
+
+Da `_bridge` nicht mehr im Schema ist, nutze die Homebridge UI-X Standard-Methode:
+
+1. Plugin Settings öffnen
+2. **Zahnrad-Symbol** (⚙️) oben rechts klicken
+3. **"Bridge Settings"** → **"Run this plugin as a separate child bridge"** aktivieren
+4. Speichern & Homebridge neu starten
+
+### Jetzt sollte alles funktionieren!
+
+- ✅ Konfiguration wird gespeichert
+- ✅ Alle Felder editierbar
+- ✅ Child Bridge über Standard-UI aktivierbar
+- ✅ Test-Switch funktioniert
+
 ## [0.0.5-alpha] - 2025-10-22
 
 ### ✨ Neue Features
