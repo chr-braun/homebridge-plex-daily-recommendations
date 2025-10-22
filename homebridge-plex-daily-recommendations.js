@@ -3,87 +3,175 @@ const axios = require("axios");
 const cron = require("node-cron");
 const { XMLParser } = require("fast-xml-parser");
 
+const PLUGIN_NAME = "homebridge-plex-daily-recommendations";
+const PLATFORM_NAME = "PlexDailyRecommendations";
+
 module.exports = (api) => {
   Service = api.hap.Service;
   Characteristic = api.hap.Characteristic;
-  api.registerAccessory(
-    "homebridge-plex-daily-recommendations",
-    "PlexDailyRecommendations",
-    PlexDailyRecommendations,
+
+  api.registerPlatform(
+    PLUGIN_NAME,
+    PLATFORM_NAME,
+    PlexDailyRecommendationsPlatform,
   );
 };
 
-// UI Schema für Homebridge UI-X
+// UI Schema für Homebridge UI-X Platform
 module.exports.schema = {
-  type: "object",
-  properties: {
-    name: {
-      title: "Name",
-      type: "string",
-      default: "Plex Empfehlungen",
-      description: "Name des Accessories in HomeKit",
-    },
-    plexUrl: {
-      title: "Plex Server URL",
-      type: "string",
-      default: "http://192.168.178.3:32400",
-      description: "URL deines Plex Servers (z.B. http://192.168.1.100:32400)",
-      format: "uri",
-    },
-    plexToken: {
-      title: "Plex API Token",
-      type: "string",
-      description:
-        "Dein Plex API Token (https://support.plex.tv/articles/204059436)",
-      "x-display": "password",
-    },
-    machineId: {
-      title: "Plex Server Machine ID",
-      type: "string",
-      description: "Machine ID deines Plex Servers",
-    },
-    notificationTime: {
-      title: "Benachrichtigungszeit",
-      type: "string",
-      default: "20:00",
-      pattern: "^([0-1][0-9]|2[0-3]):[0-5][0-9]$",
-      description:
-        "Uhrzeit für tägliche Benachrichtigung (HH:MM Format, z.B. 20:00)",
-    },
-    hoursBack: {
-      title: "Stunden zurückblicken",
-      type: "integer",
-      default: 24,
-      minimum: 1,
-      maximum: 168,
-      description:
-        "Wie viele Stunden zurück nach neuen Inhalten suchen (1-168)",
+  pluginAlias: PLATFORM_NAME,
+  pluginType: "platform",
+  singular: true,
+  schema: {
+    type: "object",
+    properties: {
+      name: {
+        title: "Platform Name",
+        type: "string",
+        default: "Plex Daily Recommendations",
+        description: "Name der Platform (erscheint in Homebridge Logs)",
+        required: true,
+      },
+      plexUrl: {
+        title: "Plex Server URL",
+        type: "string",
+        default: "http://192.168.178.3:32400",
+        description:
+          "URL deines Plex Servers (z.B. http://192.168.1.100:32400)",
+        format: "uri",
+        required: true,
+      },
+      plexToken: {
+        title: "Plex API Token",
+        type: "string",
+        placeholder: "Dein Plex Token eingeben...",
+        description:
+          "Dein Plex API Token (https://support.plex.tv/articles/204059436)",
+        required: true,
+      },
+      machineId: {
+        title: "Plex Server Machine ID",
+        type: "string",
+        placeholder: "Machine ID eingeben...",
+        description: "Machine ID deines Plex Servers",
+        required: true,
+      },
+      notificationTime: {
+        title: "Benachrichtigungszeit",
+        type: "string",
+        default: "20:00",
+        pattern: "^([0-1][0-9]|2[0-3]):[0-5][0-9]$",
+        placeholder: "20:00",
+        description:
+          "Uhrzeit für tägliche Benachrichtigung (HH:MM Format, z.B. 20:00)",
+      },
+      hoursBack: {
+        title: "Stunden zurückblicken",
+        type: "number",
+        default: 24,
+        minimum: 1,
+        maximum: 168,
+        description:
+          "Wie viele Stunden zurück nach neuen Inhalten suchen (1-168)",
+      },
     },
   },
-  required: ["plexToken", "machineId"],
   layout: [
     {
-      type: "fieldset",
-      items: ["name"],
+      type: "help",
+      helpvalue:
+        "<h5>Plex Daily Recommendations</h5><p>Dieses Plugin sendet dir täglich HomeKit-Benachrichtigungen über neue Inhalte auf deinem Plex Server.</p>",
+    },
+    {
+      key: "name",
     },
     {
       type: "fieldset",
       title: "Plex Server Verbindung",
+      expandable: true,
+      expanded: true,
       items: ["plexUrl", "plexToken", "machineId"],
     },
     {
       type: "fieldset",
       title: "Benachrichtigungen",
+      expandable: true,
+      expanded: true,
       items: ["notificationTime", "hoursBack"],
     },
   ],
 };
 
-class PlexDailyRecommendations {
+/**
+ * Platform-Klasse für Homebridge
+ * Diese wird von Homebridge beim Start instanziiert
+ */
+class PlexDailyRecommendationsPlatform {
   constructor(log, config, api) {
     this.log = log;
     this.config = config;
     this.api = api;
+    this.accessories = [];
+
+    this.log.info("Plex Daily Recommendations Platform wird initialisiert...");
+
+    // Warte bis Homebridge fertig ist mit laden
+    this.api.on("didFinishLaunching", () => {
+      this.log.info("Homebridge fertig geladen, erstelle Accessory...");
+      this.discoverDevices();
+    });
+  }
+
+  /**
+   * Wird von Homebridge aufgerufen um gecachte Accessories wiederherzustellen
+   */
+  configureAccessory(accessory) {
+    this.log.info("Lade gecachtes Accessory:", accessory.displayName);
+    this.accessories.push(accessory);
+  }
+
+  /**
+   * Erstellt oder aktualisiert das Plex Sensor Accessory
+   */
+  discoverDevices() {
+    const uuid = this.api.hap.uuid.generate(
+      "plex-daily-recommendations-sensor",
+    );
+    const existingAccessory = this.accessories.find((acc) => acc.UUID === uuid);
+
+    if (existingAccessory) {
+      // Accessory existiert bereits, aktualisiere es
+      this.log.info(
+        "Verwende existierendes Accessory:",
+        existingAccessory.displayName,
+      );
+      new PlexSensorAccessory(this, existingAccessory, this.config);
+    } else {
+      // Erstelle neues Accessory
+      this.log.info("Erstelle neues Accessory: Plex Empfehlungen");
+      const accessory = new this.api.platformAccessory(
+        "Plex Empfehlungen",
+        uuid,
+      );
+
+      new PlexSensorAccessory(this, accessory, this.config);
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+        accessory,
+      ]);
+    }
+  }
+}
+
+/**
+ * Accessory-Klasse für den Plex Sensor
+ * Enthält die eigentliche Logik
+ */
+class PlexSensorAccessory {
+  constructor(platform, accessory, config) {
+    this.platform = platform;
+    this.accessory = accessory;
+    this.log = platform.log;
+    this.config = config;
 
     // Konfiguration
     this.name = config.name || "Plex Recommendations";
@@ -109,8 +197,18 @@ class PlexDailyRecommendations {
     // Validierung
     this.validateConfig();
 
-    // HomeKit Service Setup
-    this.service = new Service.OccupancySensor(this.name);
+    // Accessory Information Service aktualisieren
+    this.accessory
+      .getService(Service.AccessoryInformation)
+      .setCharacteristic(Characteristic.Manufacturer, "Plex")
+      .setCharacteristic(Characteristic.Model, "Daily Recommendations")
+      .setCharacteristic(Characteristic.SerialNumber, "PR-001");
+
+    // HomeKit Service Setup - hole oder erstelle OccupancySensor
+    this.service =
+      this.accessory.getService(Service.OccupancySensor) ||
+      this.accessory.addService(Service.OccupancySensor, this.name);
+
     this.service
       .getCharacteristic(Characteristic.OccupancyDetected)
       .onGet(this.getOccupancyDetected.bind(this));
@@ -119,8 +217,8 @@ class PlexDailyRecommendations {
     const [hours, minutes] = this.notificationTime.split(":");
     this.cronSchedule = `${minutes} ${hours} * * *`;
 
-    this.log(
-      `Starte Cron-Job für tägliche Benachrichtigungen um ${this.notificationTime}`,
+    this.log.info(
+      `✓ Cron-Job konfiguriert für tägliche Benachrichtigungen um ${this.notificationTime}`,
     );
     cron.schedule(this.cronSchedule, () => this.sendDailyNotification());
 
@@ -450,14 +548,5 @@ class PlexDailyRecommendations {
 
   getOccupancyDetected() {
     return this.occupancyDetected;
-  }
-
-  getServices() {
-    const informationService = new Service.AccessoryInformation()
-      .setCharacteristic(Characteristic.Manufacturer, "Plex")
-      .setCharacteristic(Characteristic.Model, "Daily Recommendations")
-      .setCharacteristic(Characteristic.SerialNumber, "PR-001");
-
-    return [informationService, this.service];
   }
 }

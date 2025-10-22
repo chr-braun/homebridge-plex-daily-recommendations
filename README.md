@@ -45,11 +45,10 @@ Füge dies zu deiner Homebridge `config.json` hinzu:
 
 ```json
 {
-  "accessories": [
+  "platforms": [
     {
-      "accessory": "homebridge-plex-daily-recommendations",
-      "type": "PlexDailyRecommendations",
-      "name": "Plex Empfehlungen",
+      "platform": "PlexDailyRecommendations",
+      "name": "Plex Daily Recommendations",
       "plexUrl": "http://192.168.178.3:32400",
       "plexToken": "DEIN_PLEX_TOKEN",
       "machineId": "DEINE_SERVER_MACHINE_ID",
@@ -59,6 +58,8 @@ Füge dies zu deiner Homebridge `config.json` hinzu:
   ]
 }
 ```
+
+**Wichtig:** Das Plugin ist eine **Platform**, nicht ein einzelnes Accessory. Stelle sicher, dass du es unter `platforms` (nicht `accessories`) in der config.json einträgst.
 
 ## Konfigurationsoptionen
 

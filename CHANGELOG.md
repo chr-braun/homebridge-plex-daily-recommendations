@@ -2,6 +2,61 @@
 
 Alle wesentlichen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [0.0.2-alpha] - 2025-10-22
+
+### 🎯 Umstellung auf Platform-Plugin
+
+**BREAKING CHANGE**: Das Plugin wurde von einem Accessory- auf ein Platform-Plugin umgestellt.
+
+### Geändert
+
+- **Platform-Architektur**: Plugin ist jetzt als Homebridge Platform registriert
+  - Ermöglicht GUI-Konfiguration in Homebridge UI-X
+  - Bessere Integration in das Homebridge-Ökosystem
+- **Config-Schema**: Komplett überarbeitet für Platform-Support
+  - Hinzugefügt: Hilfetext im UI
+  - Hinzugefügt: Placeholder-Texte für Eingabefelder
+  - Hinzugefügt: Expandierbare Fieldsets
+  - Verbessert: Validierung mit `required` Feldern
+- **Konfiguration**: Migration erforderlich von `accessories` zu `platforms` in config.json
+
+### Migration von v0.0.1-alpha
+
+**Alte Konfiguration (accessories):**
+
+```json
+{
+  "accessories": [
+    {
+      "accessory": "homebridge-plex-daily-recommendations",
+      "type": "PlexDailyRecommendations",
+      "name": "Plex Empfehlungen",
+      ...
+    }
+  ]
+}
+```
+
+**Neue Konfiguration (platforms):**
+
+```json
+{
+  "platforms": [
+    {
+      "platform": "PlexDailyRecommendations",
+      "name": "Plex Daily Recommendations",
+      ...
+    }
+  ]
+}
+```
+
+### Hinzugefügt
+
+- GUI-Konfiguration über Homebridge UI-X vollständig unterstützt
+- Platform-Klasse mit Accessory-Discovery
+- Verbesserte Logging-Ausgaben für Platform-Lifecycle
+
 ## [0.0.1-alpha] - 2025-10-22
 
 ### Alpha Release

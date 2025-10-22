@@ -1,6 +1,6 @@
 {
   "name": "homebridge-plex-daily-recommendations",
-  "version": "0.0.1-alpha",
+  "version": "0.0.2-alpha",
   "description": "Homebridge plugin for daily Plex recommendations via HomeKit notifications",
   "main": "homebridge-plex-daily-recommendations.js",
   "scripts": {
@@ -51,19 +51,14 @@
   },
   "homebridge": {
     "displayName": "Plex Daily Recommendations",
-    "category": "Sensor",
-    "publisher": "homebridge-plex-daily-recommendations",
-    "pluginAlias": "homebridge-plex-daily-recommendations",
-    "platforms": [],
-    "accessories": [
+    "pluginAlias": "PlexDailyRecommendations",
+    "pluginType": "platform",
+    "singular": true,
+    "platforms": [
       {
-        "displayName": "Plex Daily Recommendations",
-        "category": "Sensor",
-        "type": "PlexDailyRecommendations"
+        "name": "PlexDailyRecommendations",
+        "displayName": "Plex Daily Recommendations"
       }
-    ],
-    "requirements": [],
-    "documentation": "https://github.com/chr-braun/homebridge-plex-daily-recommendations#readme",
-    "changelog": "https://github.com/chr-braun/homebridge-plex-daily-recommendations/blob/main/CHANGELOG.md"
+    ]
   }
 }
