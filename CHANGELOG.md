@@ -2,6 +2,34 @@
 
 Alle wesentlichen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [0.0.8-alpha] - 2025-10-22
+
+### 🔧 FIX: Circular Reference Error behoben
+
+**Problem behoben:** "Failed to save cached accessories to disk: Converting circular structure to JSON"
+
+### Was war das Problem?
+
+Die `PlexSensorAccessory` Klasse speicherte eine Referenz auf die gesamte `platform`:
+```javascript
+this.platform = platform; // ❌ Circular reference!
+```
+
+Da die Platform ein Array von Accessories hat und jedes Accessory zurück auf die Platform zeigt, entstand eine **zirkuläre Referenz** die Homebridge nicht serialisieren konnte.
+
+### Was wurde geändert
+
+- ❌ `this.platform = platform` entfernt
+- ✅ Nur noch benötigte Referenzen gespeichert (`this.log`, `this.config`)
+- ✅ Kommentar hinzugefügt zur Vermeidung zukünftiger circular references
+- ✅ Accessories können jetzt korrekt gespeichert werden
+
+### Jetzt funktioniert:
+
+- ✅ Accessories werden zwischen Neustarts gespeichert
+- ✅ Keine "Failed to save cached accessories" Fehler mehr
+- ✅ Plugin lädt stabil
+
 ## [0.0.7-alpha] - 2025-10-22
 
 ### 🔥 KRITISCHER FIX: Plugin lädt jetzt endlich!

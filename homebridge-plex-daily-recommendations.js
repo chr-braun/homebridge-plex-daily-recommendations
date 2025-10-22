@@ -83,7 +83,8 @@ class PlexDailyRecommendationsPlatform {
  */
 class PlexSensorAccessory {
   constructor(platform, accessory, config) {
-    this.platform = platform;
+    // WICHTIG: Speichere NICHT die gesamte platform (circular reference!)
+    // Speichere nur die benötigten Referenzen
     this.accessory = accessory;
     this.log = platform.log;
     this.config = config;
