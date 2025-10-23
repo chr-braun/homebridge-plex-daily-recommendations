@@ -2,11 +2,19 @@
   "pluginAlias": "PlexDailyRecommendations",
   "pluginType": "platform",
   "singular": true,
+  "customUi": false,
+  "customUiPath": "",
   "headerDisplay": "Dieses Plugin sendet dir täglich HomeKit-Benachrichtigungen über neue Inhalte auf deinem Plex Server.",
   "footerDisplay": "Weitere Informationen findest du im [GitHub Repository](https://github.com/chr-braun/homebridge-plex-daily-recommendations).",
   "schema": {
     "type": "object",
     "properties": {
+      "platform": {
+        "title": "Platform",
+        "type": "string",
+        "const": "PlexDailyRecommendations",
+        "description": "Platform identifier (do not change)"
+      },
       "name": {
         "title": "Platform Name",
         "type": "string",
@@ -45,10 +53,14 @@
         "description": "Wie viele Stunden zurück nach neuen Inhalten suchen (1-168)"
       }
     },
-    "required": ["name", "plexToken", "machineId"]
+    "required": ["platform", "name", "plexToken", "machineId"]
   },
   "form": null,
   "layout": [
+    {
+      "key": "platform",
+      "type": "hidden"
+    },
     {
       "type": "help",
       "helpvalue": "<h5>🎬 Plex Daily Recommendations</h5><p>Erhalte täglich Benachrichtigungen über neue Filme und Serien auf deinem Plex Server direkt in HomeKit!</p><p><strong>💡 Tipp:</strong> Child Bridge kann in den erweiterten Einstellungen aktiviert werden (Zahnrad-Symbol → Bridge Settings).</p>"
