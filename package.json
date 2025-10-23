@@ -1,6 +1,6 @@
 {
   "name": "homebridge-plex-daily-recommendations",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "🎬 Homebridge plugin for daily Plex recommendations via HomeKit notifications with detailed movie info and direct Plex links",
   "main": "homebridge-plex-daily-recommendations.js",
   "scripts": {
