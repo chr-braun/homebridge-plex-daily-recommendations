@@ -2,7 +2,7 @@
   "pluginAlias": "PlexDailyRecommendations",
   "pluginType": "platform",
   "singular": true,
-  "customUi": false,
+  "customUi": true,
   "customUiPath": "",
   "headerDisplay": "Dieses Plugin sendet dir täglich HomeKit-Benachrichtigungen über neue Inhalte auf deinem Plex Server.",
   "footerDisplay": "Weitere Informationen findest du im [GitHub Repository](https://github.com/chr-braun/homebridge-plex-daily-recommendations).",
@@ -51,11 +51,25 @@
         "minimum": 1,
         "maximum": 168,
         "description": "Wie viele Stunden zurück nach neuen Inhalten suchen (1-168)"
+      },
+      "testNotification": {
+        "title": "Test-Benachrichtigung",
+        "type": "button",
+        "description": "Sende eine Test-Benachrichtigung mit aktuellen Plex-Inhalten"
       }
     },
     "required": ["platform", "name", "plexToken", "machineId"]
   },
-  "form": null,
+  "form": [
+    {
+      "key": "testNotification",
+      "type": "button",
+      "title": "🧪 Test-Benachrichtigung senden",
+      "description": "Sende eine Test-Benachrichtigung mit aktuellen Plex-Inhalten",
+      "buttonText": "Test starten",
+      "buttonClass": "btn-primary"
+    }
+  ],
   "layout": [
     {
       "key": "platform",
@@ -82,7 +96,7 @@
     },
     {
       "type": "help",
-      "helpvalue": "<h6>🧪 Test-Benachrichtigung</h6><p>Um eine Test-Benachrichtigung zu senden, verwende den Switch <strong>\"Test Benachrichtigung\"</strong> in der Home App.</p>"
+      "helpvalue": "<h6>🧪 Test-Benachrichtigung</h6><p>Um eine Test-Benachrichtigung zu senden, verwende den Switch <strong>\"Test Benachrichtigung\"</strong> in der Home App oder den Button unten.</p>"
     }
   ]
 }

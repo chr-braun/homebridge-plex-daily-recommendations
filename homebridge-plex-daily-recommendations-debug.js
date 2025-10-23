@@ -6,7 +6,7 @@ const { XMLParser } = require("fast-xml-parser");
 const PLUGIN_NAME = "homebridge-plex-daily-recommendations";
 const PLATFORM_NAME = "PlexDailyRecommendations";
 
-console.log("🎬 Plex Daily Recommendations Plugin v0.1.0 wird geladen...");
+console.log("🔧 DEBUG: Plugin wird geladen...");
 
 /**
  * Platform-Klasse für Homebridge
@@ -21,29 +21,21 @@ class PlexDailyRecommendationsPlatform {
     this.config = config;
     this.api = api;
     this.accessories = [];
-    this.sensorInstances = []; // Speichere Instanzen für Cleanup
 
-    this.log.info("🎬 Plex Daily Recommendations Platform wird initialisiert...");
-    this.log.info(`📋 Konfiguration: ${config.name}`);
-    this.log.info(`🌐 Plex Server: ${config.plexUrl}`);
-    this.log.info(`🔑 Plex Token: ${config.plexToken ? "✅ Konfiguriert" : "❌ Fehlt"}`);
-    this.log.info(`🆔 Machine ID: ${config.machineId ? "✅ Konfiguriert" : "❌ Fehlt"}`);
+    this.log.info("🔧 DEBUG: Plex Daily Recommendations Platform wird initialisiert...");
+    this.log.info("🔧 DEBUG: Config Name:", config.name);
+    this.log.info("🔧 DEBUG: Plex URL:", config.plexUrl);
+    this.log.info("🔧 DEBUG: Plex Token:", config.plexToken ? "✅ Vorhanden" : "❌ Fehlt");
+    this.log.info("🔧 DEBUG: Machine ID:", config.machineId ? "✅ Vorhanden" : "❌ Fehlt");
 
     // Warte bis Homebridge fertig ist mit laden
     this.api.on("didFinishLaunching", () => {
-    this.log.info("🚀 Homebridge ist bereit - erstelle Accessories...");
+      this.log.info("🔧 DEBUG: didFinishLaunching Event empfangen");
+      this.log.info("Homebridge fertig geladen, erstelle Accessory...");
       this.discoverDevices();
     });
 
-    this.log.info("✅ Platform erfolgreich initialisiert");
-  }
-
-  // Cleanup-Methode für die Platform
-  // Wird von Homebridge aufgerufen, wenn das Plugin entladen wird
-  shutdown() {
-    this.log.info("🔧 DEBUG: Plex Daily Recommendations Platform wird beendet...");
-    this.sensorInstances.forEach(sensor => sensor.destroy());
-    this.sensorInstances = [];
+    this.log.info("🔧 DEBUG: Platform Constructor abgeschlossen");
   }
 
   /**
@@ -57,8 +49,7 @@ class PlexDailyRecommendationsPlatform {
     // Stelle das PlexSensorAccessory wieder her, aber nur einmal
     if (!accessory.context.plexSensorConfigured) {
       this.log.info("🔧 DEBUG: Erstelle PlexSensorAccessory für gecachtes Accessory");
-      const sensor = new PlexSensorAccessory(this, accessory, this.config);
-      this.sensorInstances.push(sensor);
+      new PlexSensorAccessory(this, accessory, this.config);
       accessory.context.plexSensorConfigured = true;
     }
   }
@@ -67,164 +58,49 @@ class PlexDailyRecommendationsPlatform {
    * Erstellt oder aktualisiert das Plex Sensor Accessory
    */
   discoverDevices() {
-    this.log.info("🔍 Suche nach Plex Sensor Accessory...");
+    this.log.info("🔧 DEBUG: discoverDevices aufgerufen");
     
     const uuid = this.api.hap.uuid.generate(
       "plex-daily-recommendations-sensor",
     );
+    this.log.info("🔧 DEBUG: Generated UUID:", uuid);
     
     const existingAccessory = this.accessories.find((acc) => acc.UUID === uuid);
+    this.log.info("🔧 DEBUG: Existing accessory gefunden:", !!existingAccessory);
 
     if (existingAccessory) {
       // Accessory existiert bereits, prüfe ob es bereits konfiguriert ist
-      this.log.info(`♻️ Verwende existierendes Accessory: ${existingAccessory.displayName}`);
+      this.log.info(
+        "Verwende existierendes Accessory:",
+        existingAccessory.displayName,
+      );
       
       // Prüfe ob das Accessory bereits ein PlexSensorAccessory hat
       if (!existingAccessory.context.plexSensorConfigured) {
-        this.log.info("🔧 Konfiguriere PlexSensorAccessory...");
-        const sensor = new PlexSensorAccessory(this, existingAccessory, this.config);
-        this.sensorInstances.push(sensor);
+        this.log.info("🔧 DEBUG: Erstelle PlexSensorAccessory für existierendes Accessory");
+        new PlexSensorAccessory(this, existingAccessory, this.config);
         existingAccessory.context.plexSensorConfigured = true;
       }
     } else {
       // Erstelle neues Accessory
-      this.log.info("🆕 Erstelle neues Plex Sensor Accessory...");
+      this.log.info("🔧 DEBUG: Erstelle neues Accessory");
+      this.log.info("Erstelle neues Accessory: Plex Empfehlungen");
       const accessory = new this.api.platformAccessory(
         "Plex Empfehlungen",
         uuid,
       );
 
-      this.log.info("⚙️ Konfiguriere PlexSensorAccessory...");
-      const sensor = new PlexSensorAccessory(this, accessory, this.config);
-      this.sensorInstances.push(sensor);
+      this.log.info("🔧 DEBUG: Erstelle PlexSensorAccessory für neues Accessory");
+      new PlexSensorAccessory(this, accessory, this.config);
       accessory.context.plexSensorConfigured = true;
       
-      this.log.info("📝 Registriere Platform Accessories...");
+      this.log.info("🔧 DEBUG: Registriere Platform Accessories");
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
         accessory,
       ]);
-
-      // Erstelle separaten Test-Switch als eigenes Accessory
-      this.createTestSwitchAccessory();
     }
     
     this.log.info("🔧 DEBUG: discoverDevices abgeschlossen");
-  }
-
-  /**
-   * Handler für UI Button-Klicks
-   * Wird von der Homebridge UI aufgerufen, wenn der Test-Button gedrückt wird
-   */
-  async testNotification() {
-    this.log.info("🧪 Test-Benachrichtigung über Homebridge UI Button ausgelöst...");
-    
-    // Finde das erste PlexSensorAccessory und führe Test durch
-    const sensorInstance = this.sensorInstances.find(instance => 
-      instance.constructor.name === 'PlexSensorAccessory'
-    );
-    
-    if (sensorInstance) {
-      try {
-        await sensorInstance.sendDailyNotification();
-        this.log.info("✅ Test-Benachrichtigung erfolgreich gesendet");
-        return { success: true, message: "Test-Benachrichtigung erfolgreich gesendet" };
-      } catch (error) {
-        this.log.error(`❌ Fehler beim Senden der Test-Benachrichtigung: ${error.message}`);
-        return { success: false, message: `Fehler: ${error.message}` };
-      }
-    } else {
-      this.log.error("❌ Kein PlexSensorAccessory gefunden");
-      return { success: false, message: "Kein PlexSensorAccessory gefunden" };
-    }
-  }
-
-  /**
-   * UI Event Handler - wird von der Homebridge UI aufgerufen
-   */
-  async uiEvent(event) {
-    this.log.info(`🔧 DEBUG: UI Event empfangen: ${event.type}`);
-    
-    switch (event.type) {
-      case 'testNotification':
-        return await this.testNotification();
-      default:
-        this.log.warn(`Unbekanntes UI Event: ${event.type}`);
-        return { success: false, message: `Unbekanntes Event: ${event.type}` };
-    }
-  }
-
-  /**
-   * UI Button Handler - wird von der Homebridge UI aufgerufen
-   */
-  async uiButton(button) {
-    this.log.info(`🔧 DEBUG: UI Button gedrückt: ${button.key}`);
-    
-    switch (button.key) {
-      case 'testNotification':
-        return await this.testNotification();
-      default:
-        this.log.warn(`Unbekannter UI Button: ${button.key}`);
-        return { success: false, message: `Unbekannter Button: ${button.key}` };
-    }
-  }
-
-  /**
-   * Erstellt einen separaten Test-Switch als eigenes Accessory
-   */
-  createTestSwitchAccessory() {
-    this.log.info("🔧 DEBUG: Erstelle separaten Test-Switch Accessory");
-    
-    const testSwitchUuid = this.api.hap.uuid.generate("plex-test-switch");
-    const existingTestSwitch = this.accessories.find((acc) => acc.UUID === testSwitchUuid);
-
-    if (existingTestSwitch) {
-      this.log.info("🔧 DEBUG: Test-Switch Accessory existiert bereits");
-      return;
-    }
-
-    // Erstelle neues Test-Switch Accessory
-    const testSwitchAccessory = new this.api.platformAccessory(
-      "Plex Test Switch",
-      testSwitchUuid,
-    );
-
-    // Accessory Information Service
-    testSwitchAccessory
-      .getService(this.api.hap.Service.AccessoryInformation)
-      .setCharacteristic(this.api.hap.Characteristic.Manufacturer, "Plex Daily Recommendations")
-      .setCharacteristic(this.api.hap.Characteristic.Model, "Test Switch")
-      .setCharacteristic(this.api.hap.Characteristic.SerialNumber, "TEST-001");
-
-    // Switch Service
-    const switchService = testSwitchAccessory.addService(
-      this.api.hap.Service.Switch,
-      "Test Benachrichtigung",
-      "test-switch"
-    );
-
-    switchService
-      .getCharacteristic(this.api.hap.Characteristic.On)
-      .onGet(() => false) // Immer aus
-      .onSet(async (value) => {
-        if (value) {
-          this.log.info("🧪 Test-Benachrichtigung über separaten Switch ausgelöst...");
-          this.log.info("🔧 DEBUG: Starte manuelle Benachrichtigung...");
-          await this.sendDailyNotification();
-          // Schalte Switch automatisch wieder aus
-          setTimeout(() => {
-            switchService.updateCharacteristic(this.api.hap.Characteristic.On, false);
-            this.log.info("✅ Test-Benachrichtigung abgeschlossen - Switch zurückgesetzt");
-          }, 2000);
-        }
-      });
-
-    // Registriere den Test-Switch
-    this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
-      testSwitchAccessory,
-    ]);
-
-    this.accessories.push(testSwitchAccessory);
-    this.log.info("✅ Test-Switch Accessory erstellt und registriert");
   }
 }
 
@@ -241,11 +117,8 @@ class PlexSensorAccessory {
     this.accessory = accessory;
     this.log = platform.log;
     this.config = config;
-    // Speichere API-Referenzen separat, nicht die gesamte API
-    this.Service = platform.api.hap.Service;
-    this.Characteristic = platform.api.hap.Characteristic;
 
-    this.log.info("🎬 PlexSensorAccessory wird initialisiert...");
+    this.log.info("🔧 DEBUG: PlexSensorAccessory wird initialisiert");
 
     // Konfiguration
     this.name = config.name || "Plex Recommendations";
@@ -255,10 +128,11 @@ class PlexSensorAccessory {
     this.notificationTime = config.notificationTime || "20:00"; // HH:MM Format
     this.hoursBack = config.hoursBack || 24; // Wie viele Stunden zurück nach neuen Inhalten suchen
 
-    this.log.info(`📋 Name: ${this.name}`);
-    this.log.info(`🌐 Plex URL: ${this.plexUrl}`);
-    this.log.info(`⏰ Benachrichtigungszeit: ${this.notificationTime}`);
-    this.log.info(`🕐 Zeitraum: ${this.hoursBack} Stunden zurück`);
+    this.log.info("🔧 DEBUG: Konfiguration geladen");
+    this.log.info("🔧 DEBUG: Name:", this.name);
+    this.log.info("🔧 DEBUG: Plex URL:", this.plexUrl);
+    this.log.info("🔧 DEBUG: Notification Time:", this.notificationTime);
+    this.log.info("🔧 DEBUG: Hours Back:", this.hoursBack);
 
     // XML Parser initialisieren
     this.xmlParser = new XMLParser({
@@ -274,56 +148,48 @@ class PlexSensorAccessory {
     };
 
     // Validierung
-    this.log.info("🔍 Validiere Konfiguration...");
+    this.log.info("🔧 DEBUG: Starte Konfigurationsvalidierung");
     this.validateConfig();
 
-    this.log.info("📱 Konfiguriere Accessory Information Service...");
+    this.log.info("🔧 DEBUG: Erstelle Accessory Information Service");
     // Accessory Information Service aktualisieren
-    const accessoryInfo = this.accessory.getService(this.Service.AccessoryInformation);
-    if (accessoryInfo) {
-      accessoryInfo.setCharacteristic(this.Characteristic.Manufacturer, "Plex");
-      accessoryInfo.setCharacteristic(this.Characteristic.Model, "Daily Recommendations");
-      accessoryInfo.setCharacteristic(this.Characteristic.SerialNumber, "PR-001");
-    }
+    this.accessory
+      .getService(Service.AccessoryInformation)
+      .setCharacteristic(Characteristic.Manufacturer, "Plex")
+      .setCharacteristic(Characteristic.Model, "Daily Recommendations")
+      .setCharacteristic(Characteristic.SerialNumber, "PR-001");
 
-    this.log.info("🔔 Konfiguriere OccupancySensor Service...");
+    this.log.info("🔧 DEBUG: Erstelle OccupancySensor Service");
     // HomeKit Service Setup - hole oder erstelle OccupancySensor
     this.service =
-      this.accessory.getService(this.Service.OccupancySensor) ||
-      this.accessory.addService(this.Service.OccupancySensor, this.name);
+      this.accessory.getService(Service.OccupancySensor) ||
+      this.accessory.addService(Service.OccupancySensor, this.name);
 
     this.service
-      .getCharacteristic(this.Characteristic.OccupancyDetected)
+      .getCharacteristic(Characteristic.OccupancyDetected)
       .onGet(this.getOccupancyDetected.bind(this));
 
-    this.log.info("🎛️ Konfiguriere Test Switch Service...");
+    this.log.info("🔧 DEBUG: Erstelle Test Switch Service");
     // Test-Switch hinzufügen für manuelle Benachrichtigungen
     this.testSwitch =
       this.accessory.getService("Test Benachrichtigung") ||
       this.accessory.addService(
-        this.Service.Switch,
+        Service.Switch,
         "Test Benachrichtigung",
         "test-switch",
       );
 
-    // Setze Service-Informationen für bessere UI-Darstellung
     this.testSwitch
-      .setCharacteristic(this.Characteristic.Name, "Test Benachrichtigung")
-      .setCharacteristic(this.Characteristic.ConfiguredName, "Test Benachrichtigung");
-
-    this.testSwitch
-      .getCharacteristic(this.Characteristic.On)
+      .getCharacteristic(Characteristic.On)
       .onGet(() => false) // Immer aus
       .onSet(async (value) => {
         if (value) {
-          this.log.info("🧪 Test-Benachrichtigung über Homebridge UI ausgelöst...");
-          this.log.info("🔧 DEBUG: Starte manuelle Benachrichtigung...");
+          this.log.info("🧪 Test-Benachrichtigung manuell ausgelöst...");
           await this.sendDailyNotification();
           // Schalte Switch automatisch wieder aus
           setTimeout(() => {
-            this.testSwitch.updateCharacteristic(this.Characteristic.On, false);
-            this.log.info("✅ Test-Benachrichtigung abgeschlossen - Switch zurückgesetzt");
-          }, 2000);
+            this.testSwitch.updateCharacteristic(Characteristic.On, false);
+          }, 1000);
         }
       });
 
@@ -331,18 +197,21 @@ class PlexSensorAccessory {
     const [hours, minutes] = this.notificationTime.split(":");
     this.cronSchedule = `${minutes} ${hours} * * *`;
 
-    this.log.info(`⏰ Cron-Job konfiguriert für tägliche Benachrichtigungen um ${this.notificationTime}`);
-    this.log.info("🎛️ Test-Switch verfügbar in HomeKit: \"Test Benachrichtigung\"");
-    this.log.info("🖥️ Test-Switch auch in Homebridge UI verfügbar für manuelle Tests");
+    this.log.info(
+      `✓ Cron-Job konfiguriert für tägliche Benachrichtigungen um ${this.notificationTime}`,
+    );
+    this.log.info(
+      "✓ Test-Switch verfügbar in HomeKit: \"Test Benachrichtigung\"",
+    );
     
-    this.log.info("🚀 Starte Cron Job...");
+    this.log.info("🔧 DEBUG: Starte Cron Job");
     this.cronJob = cron.schedule(this.cronSchedule, () => {
-      this.log.info("⏰ Cron Job ausgelöst - führe tägliche Benachrichtigung durch...");
+      this.log.info("🔧 DEBUG: Cron Job ausgelöst");
       this.sendDailyNotification();
     });
 
     this.occupancyDetected = false;
-    this.log.info("✅ PlexSensorAccessory erfolgreich initialisiert");
+    this.log.info("🔧 DEBUG: PlexSensorAccessory initialisiert");
   }
 
   /**
@@ -396,19 +265,20 @@ class PlexSensorAccessory {
    * Sendet tägliche Benachrichtigung über neue Inhalte
    */
   async sendDailyNotification() {
-    this.log.info("🎬 Führe tägliche Plex-Empfehlungsabfrage durch...");
+    this.log.info("🔧 DEBUG: sendDailyNotification aufgerufen");
+    this.log.info("Führe tägliche Plex-Empfehlungsabfrage durch...");
 
     try {
       const newContent = await this.getNewContent();
-      this.log.info(`🔍 ${newContent.length} neue Inhalte gefunden!`);
+      this.log.info("🔧 DEBUG: Neue Inhalte abgerufen:", newContent.length);
 
       if (newContent.length > 0) {
-        this.log.info(`🎉 ${newContent.length} neue Inhalte gefunden!`);
+        this.log.info(`✓ ${newContent.length} neue Inhalte gefunden!`);
 
         // Benachrichtigung durch Accessory-Status-Änderung triggern
         this.occupancyDetected = true;
         this.service.updateCharacteristic(
-          this.Characteristic.OccupancyDetected,
+          Characteristic.OccupancyDetected,
           true,
         );
 
@@ -416,36 +286,16 @@ class PlexSensorAccessory {
         setTimeout(() => {
           this.occupancyDetected = false;
           this.service.updateCharacteristic(
-            this.Characteristic.OccupancyDetected,
+            Characteristic.OccupancyDetected,
             false,
           );
         }, 5000);
 
-        // Details loggen mit verbessertem Format und Plex-Links
+        // Details loggen mit verbessertem Format
         newContent.forEach((item, index) => {
           this.log.info(
             `  ${index + 1}. ${item.title} (${item.type}) - hinzugefügt: ${item.addedAt}`,
           );
-          if (item.year) {
-            this.log.info(`     🎬 Jahr: ${item.year}`);
-          }
-          if (item.rating) {
-            this.log.info(`     ⭐ Bewertung: ${item.rating}/10`);
-          }
-          if (item.duration) {
-            const minutes = Math.floor(item.duration / 60000);
-            this.log.info(`     ⏱️ Dauer: ${minutes} Minuten`);
-          }
-          if (item.genre) {
-            this.log.info(`     🎭 Genre: ${item.genre}`);
-          }
-          if (item.summary) {
-            this.log.info(`     📝 ${item.summary.substring(0, 120)}${item.summary.length > 120 ? '...' : ''}`);
-          }
-          if (item.plexUrl) {
-            this.log.info(`     🔗 Plex öffnen: ${item.plexUrl}`);
-          }
-          this.log.info(`     ─────────────────────────────────────────`);
         });
       } else {
         this.log.info(
@@ -500,14 +350,14 @@ class PlexSensorAccessory {
    */
   async getLibraries() {
     this.log.info("🔧 DEBUG: getLibraries aufgerufen");
-      // Cache prüfen
-      if (
-        this.libraryCache.data &&
+    // Cache prüfen
+    if (
+      this.libraryCache.data &&
       Date.now() - this.libraryCache.timestamp < this.libraryCache.ttl
-      ) {
+    ) {
       this.log.info("🔧 DEBUG: Verwende gecachte Bibliotheken");
-        return this.libraryCache.data;
-      }
+      return this.libraryCache.data;
+    }
 
     try {
       this.log.info("🔧 DEBUG: Lade Bibliotheken von Plex");
@@ -559,10 +409,6 @@ class PlexSensorAccessory {
               addedAt: parseInt(item["@_addedAt"]),
               year: item["@_year"] || "",
               summary: item["@_summary"] || "",
-              plexUrl: this.generatePlexUrl(item),
-              rating: item["@_rating"] || "",
-              duration: item["@_duration"] || "",
-              genre: item["@_genre"] || "",
             });
           }
         });
@@ -602,25 +448,6 @@ class PlexSensorAccessory {
     return translations[type] || type;
   }
 
-  /**
-   * Generiert Plex-URL für direkten Zugriff
-   */
-  generatePlexUrl(item) {
-    const baseUrl = this.plexUrl.replace('http://', '').replace('https://', '');
-    const itemKey = item["@_key"];
-    const itemType = item["@_type"];
-    
-    if (itemType === "movie") {
-      return `plex://movie/${itemKey}`;
-    } else if (itemType === "show") {
-      return `plex://show/${itemKey}`;
-    } else if (itemType === "episode") {
-      return `plex://episode/${itemKey}`;
-    } else {
-      return `plex://server/${baseUrl}/details?key=${itemKey}`;
-    }
-  }
-
   getOccupancyDetected() {
     return this.occupancyDetected;
   }
@@ -651,23 +478,5 @@ module.exports = (api) => {
     PlexDailyRecommendationsPlatform,
   );
   console.log("🔧 DEBUG: Platform registriert");
-  
-  // Exportiere die Platform-Klasse für UI-Zugriff
-  module.exports.PlexDailyRecommendationsPlatform = PlexDailyRecommendationsPlatform;
-  
-  // Exportiere UI-Handler für Homebridge UI
-  module.exports.uiButton = async (button, platform) => {
-    if (platform && typeof platform.uiButton === 'function') {
-      return await platform.uiButton(button);
-    }
-    return { success: false, message: "Platform nicht verfügbar" };
-  };
-  
-  // Exportiere UI-Event-Handler für Homebridge UI
-  module.exports.uiEvent = async (event, platform) => {
-    if (platform && typeof platform.uiEvent === 'function') {
-      return await platform.uiEvent(event);
-    }
-    return { success: false, message: "Platform nicht verfügbar" };
-  };
 };
+
