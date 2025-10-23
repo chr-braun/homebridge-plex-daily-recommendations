@@ -1,7 +1,9 @@
+// eslint-disable-next-line no-unused-vars
 let Service, Characteristic;
 const axios = require("axios");
 const cron = require("node-cron");
 const { XMLParser } = require("fast-xml-parser");
+const nodemailer = require("nodemailer");
 
 const PLUGIN_NAME = "homebridge-plex-daily-recommendations";
 const PLATFORM_NAME = "PlexDailyRecommendations";
@@ -120,7 +122,7 @@ class PlexDailyRecommendationsPlatform {
     
     // Finde das erste PlexSensorAccessory und führe Test durch
     const sensorInstance = this.sensorInstances.find(instance => 
-      instance.constructor.name === 'PlexSensorAccessory'
+      instance.constructor.name === "PlexSensorAccessory"
     );
     
     if (sensorInstance) {
@@ -139,14 +141,55 @@ class PlexDailyRecommendationsPlatform {
   }
 
   /**
+   * Sendet Test-E-Mail-Benachrichtigung
+   */
+  async testEmailNotification() {
+    this.log.info("📧 Test-E-Mail-Benachrichtigung wird gesendet...");
+    
+    // Finde das erste PlexSensorAccessory und führe E-Mail-Test durch
+    const sensorInstance = this.sensorInstances.find(instance => 
+      instance.constructor.name === "PlexSensorAccessory"
+    );
+    
+    if (sensorInstance) {
+      try {
+        // Erstelle Test-Inhalt
+        const testContent = [{
+          title: "Test Film",
+          type: "Film",
+          addedAt: Math.floor(Date.now() / 1000),
+          year: "2024",
+          rating: "8.5",
+          duration: 7200000, // 120 Minuten
+          genre: "Action, Drama",
+          summary: "Dies ist ein Test-Film für die E-Mail-Benachrichtigung.",
+          plexUrl: "plex://movie/test"
+        }];
+        
+        await sensorInstance.sendEmailNotification(testContent);
+        this.log.info("✅ Test-E-Mail erfolgreich gesendet");
+        return { success: true, message: "Test-E-Mail erfolgreich gesendet" };
+      } catch (error) {
+        this.log.error(`❌ Fehler beim Senden der Test-E-Mail: ${error.message}`);
+        return { success: false, message: `Fehler: ${error.message}` };
+      }
+    } else {
+      this.log.error("❌ Kein PlexSensorAccessory gefunden");
+      return { success: false, message: "Kein PlexSensorAccessory gefunden" };
+    }
+  }
+
+  /**
    * UI Event Handler - wird von der Homebridge UI aufgerufen
    */
   async uiEvent(event) {
     this.log.info(`🔧 DEBUG: UI Event empfangen: ${event.type}`);
     
     switch (event.type) {
-      case 'testNotification':
+      case "testNotification":
         return await this.testNotification();
+      case "testEmail":
+        return await this.testEmailNotification();
       default:
         this.log.warn(`Unbekanntes UI Event: ${event.type}`);
         return { success: false, message: `Unbekanntes Event: ${event.type}` };
@@ -160,8 +203,10 @@ class PlexDailyRecommendationsPlatform {
     this.log.info(`🔧 DEBUG: UI Button gedrückt: ${button.key}`);
     
     switch (button.key) {
-      case 'testNotification':
+      case "testNotification":
         return await this.testNotification();
+      case "testEmail":
+        return await this.testEmailNotification();
       default:
         this.log.warn(`Unbekannter UI Button: ${button.key}`);
         return { success: false, message: `Unbekannter Button: ${button.key}` };
@@ -262,11 +307,26 @@ class PlexSensorAccessory {
     this.machineId = config.machineId;
     this.notificationTime = config.notificationTime || "20:00"; // HH:MM Format
     this.hoursBack = config.hoursBack || 24; // Wie viele Stunden zurück nach neuen Inhalten suchen
+    
+    // E-Mail-Konfiguration
+    this.emailEnabled = config.emailEnabled || false;
+    this.emailSmtpHost = config.emailSmtpHost;
+    this.emailSmtpPort = config.emailSmtpPort || 587;
+    this.emailSmtpSecure = config.emailSmtpSecure || false;
+    this.emailUser = config.emailUser;
+    this.emailPassword = config.emailPassword;
+    this.emailFrom = config.emailFrom;
+    this.emailTo = config.emailTo;
 
     this.log.info(`📋 Name: ${this.name}`);
     this.log.info(`🌐 Plex URL: ${this.plexUrl}`);
     this.log.info(`⏰ Benachrichtigungszeit: ${this.notificationTime}`);
     this.log.info(`🕐 Zeitraum: ${this.hoursBack} Stunden zurück`);
+    this.log.info(`📧 E-Mail-Benachrichtigungen: ${this.emailEnabled ? "✅ Aktiviert" : "❌ Deaktiviert"}`);
+    if (this.emailEnabled) {
+      this.log.info(`📧 E-Mail Empfänger: ${this.emailTo}`);
+      this.log.info(`📧 SMTP Server: ${this.emailSmtpHost}:${this.emailSmtpPort}`);
+    }
 
     // XML Parser initialisieren
     this.xmlParser = new XMLParser({
@@ -390,6 +450,34 @@ class PlexSensorAccessory {
       errors.push(`Ungültige Plex URL: ${this.plexUrl}`);
     }
 
+    // Validiere E-Mail-Konfiguration
+    if (this.emailEnabled) {
+      if (!this.emailSmtpHost) {
+        errors.push("emailSmtpHost ist erforderlich wenn E-Mail aktiviert ist");
+      }
+      if (!this.emailUser) {
+        errors.push("emailUser ist erforderlich wenn E-Mail aktiviert ist");
+      }
+      if (!this.emailPassword) {
+        errors.push("emailPassword ist erforderlich wenn E-Mail aktiviert ist");
+      }
+      if (!this.emailFrom) {
+        errors.push("emailFrom ist erforderlich wenn E-Mail aktiviert ist");
+      }
+      if (!this.emailTo) {
+        errors.push("emailTo ist erforderlich wenn E-Mail aktiviert ist");
+      }
+      
+      // Validiere E-Mail-Format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (this.emailFrom && !emailRegex.test(this.emailFrom)) {
+        errors.push(`Ungültige E-Mail-Adresse (From): ${this.emailFrom}`);
+      }
+      if (this.emailTo && !emailRegex.test(this.emailTo)) {
+        errors.push(`Ungültige E-Mail-Adresse (To): ${this.emailTo}`);
+      }
+    }
+
     if (errors.length > 0) {
       this.log.error("🔧 DEBUG: Konfigurationsfehler:", errors);
       throw new Error(
@@ -448,13 +536,18 @@ class PlexSensorAccessory {
             this.log.info(`     🎭 Genre: ${item.genre}`);
           }
           if (item.summary) {
-            this.log.info(`     📝 ${item.summary.substring(0, 120)}${item.summary.length > 120 ? '...' : ''}`);
+            this.log.info(`     📝 ${item.summary.substring(0, 120)}${item.summary.length > 120 ? "..." : ""}`);
           }
           if (item.plexUrl) {
             this.log.info(`     🔗 Plex öffnen: ${item.plexUrl}`);
           }
-          this.log.info(`     ─────────────────────────────────────────`);
+          this.log.info("     ─────────────────────────────────────────");
         });
+
+        // E-Mail-Benachrichtigung senden
+        if (this.emailEnabled) {
+          await this.sendEmailNotification(newContent);
+        }
       } else {
         this.log.info(
           `ℹ Keine neuen Inhalte in den letzten ${this.hoursBack} Stunden.`,
@@ -462,6 +555,87 @@ class PlexSensorAccessory {
       }
     } catch (error) {
       this.log.error(`❌ Fehler bei der Abfrage: ${error.message}`);
+    }
+  }
+
+  /**
+   * Sendet E-Mail-Benachrichtigung über neue Inhalte
+   */
+  async sendEmailNotification(newContent) {
+    this.log.info("📧 Sende E-Mail-Benachrichtigung...");
+    
+    try {
+      // SMTP-Transporter erstellen
+      const transporter = nodemailer.createTransporter({
+        host: this.emailSmtpHost,
+        port: this.emailSmtpPort,
+        secure: this.emailSmtpSecure,
+        auth: {
+          user: this.emailUser,
+          pass: this.emailPassword,
+        },
+      });
+
+      // E-Mail-Inhalt erstellen
+      const subject = `🎬 Plex Daily Recommendations - ${newContent.length} neue Inhalte gefunden!`;
+      
+      let htmlContent = `
+        <h2>🎬 Plex Daily Recommendations</h2>
+        <p>Es wurden <strong>${newContent.length}</strong> neue Inhalte auf deinem Plex Server gefunden!</p>
+        <hr>
+      `;
+
+      newContent.forEach((item, index) => {
+        const addedDate = new Date(item.addedAt * 1000).toLocaleDateString("de-DE");
+        const addedTime = new Date(item.addedAt * 1000).toLocaleTimeString("de-DE");
+        
+        htmlContent += `
+          <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+            <h3>${index + 1}. ${item.title} (${item.type})</h3>
+            <p><strong>Hinzugefügt:</strong> ${addedDate} um ${addedTime}</p>
+        `;
+        
+        if (item.year) {
+          htmlContent += `<p><strong>Jahr:</strong> ${item.year}</p>`;
+        }
+        if (item.rating) {
+          htmlContent += `<p><strong>Bewertung:</strong> ${item.rating}/10</p>`;
+        }
+        if (item.duration) {
+          const minutes = Math.floor(item.duration / 60000);
+          htmlContent += `<p><strong>Dauer:</strong> ${minutes} Minuten</p>`;
+        }
+        if (item.genre) {
+          htmlContent += `<p><strong>Genre:</strong> ${item.genre}</p>`;
+        }
+        if (item.summary) {
+          htmlContent += `<p><strong>Zusammenfassung:</strong> ${item.summary}</p>`;
+        }
+        if (item.plexUrl) {
+          htmlContent += `<p><a href="${item.plexUrl}" style="color: #007bff; text-decoration: none;">🔗 In Plex öffnen</a></p>`;
+        }
+        
+        htmlContent += "</div>";
+      });
+
+      htmlContent += `
+        <hr>
+        <p><small>Diese E-Mail wurde automatisch von deinem Homebridge Plex Daily Recommendations Plugin gesendet.</small></p>
+      `;
+
+      // E-Mail senden
+      const mailOptions = {
+        from: this.emailFrom,
+        to: this.emailTo,
+        subject: subject,
+        html: htmlContent,
+      };
+
+      const info = await transporter.sendMail(mailOptions);
+      this.log.info(`✅ E-Mail erfolgreich gesendet: ${info.messageId}`);
+      
+    } catch (error) {
+      this.log.error(`❌ Fehler beim Senden der E-Mail: ${error.message}`);
     }
   }
 
@@ -614,7 +788,7 @@ class PlexSensorAccessory {
    * Generiert Plex-URL für direkten Zugriff
    */
   generatePlexUrl(item) {
-    const baseUrl = this.plexUrl.replace('http://', '').replace('https://', '');
+    const baseUrl = this.plexUrl.replace("http://", "").replace("https://", "");
     const itemKey = item["@_key"];
     const itemType = item["@_type"];
     
@@ -665,7 +839,7 @@ module.exports = (api) => {
   
   // Exportiere UI-Handler für Homebridge UI
   module.exports.uiButton = async (button, platform) => {
-    if (platform && typeof platform.uiButton === 'function') {
+    if (platform && typeof platform.uiButton === "function") {
       return await platform.uiButton(button);
     }
     return { success: false, message: "Platform nicht verfügbar" };
@@ -673,7 +847,7 @@ module.exports = (api) => {
   
   // Exportiere UI-Event-Handler für Homebridge UI
   module.exports.uiEvent = async (event, platform) => {
-    if (platform && typeof platform.uiEvent === 'function') {
+    if (platform && typeof platform.uiEvent === "function") {
       return await platform.uiEvent(event);
     }
     return { success: false, message: "Platform nicht verfügbar" };
@@ -681,7 +855,7 @@ module.exports = (api) => {
   
   // Exportiere Test-API für Homebridge UI
   module.exports.testNotification = async (platform) => {
-    if (platform && typeof platform.testNotificationAPI === 'function') {
+    if (platform && typeof platform.testNotificationAPI === "function") {
       return await platform.testNotificationAPI();
     }
     return { success: false, message: "Platform nicht verfügbar" };
@@ -689,7 +863,7 @@ module.exports = (api) => {
   
   // Exportiere Test-API für Homebridge UI (alternative Methode)
   module.exports.testNotificationAPI = async (platform) => {
-    if (platform && typeof platform.testNotificationAPI === 'function') {
+    if (platform && typeof platform.testNotificationAPI === "function") {
       return await platform.testNotificationAPI();
     }
     return { success: false, message: "Platform nicht verfügbar" };
@@ -697,7 +871,7 @@ module.exports = (api) => {
   
   // Exportiere Test-API für Homebridge UI (direkte Methode)
   module.exports.testNotificationDirect = async (platform) => {
-    if (platform && typeof platform.testNotification === 'function') {
+    if (platform && typeof platform.testNotification === "function") {
       return await platform.testNotification();
     }
     return { success: false, message: "Platform nicht verfügbar" };
@@ -705,8 +879,16 @@ module.exports = (api) => {
   
   // Exportiere Test-API für Homebridge UI (einfache Methode)
   module.exports.test = async (platform) => {
-    if (platform && typeof platform.testNotification === 'function') {
+    if (platform && typeof platform.testNotification === "function") {
       return await platform.testNotification();
+    }
+    return { success: false, message: "Platform nicht verfügbar" };
+  };
+  
+  // Exportiere E-Mail-Test-API für Homebridge UI
+  module.exports.testEmail = async (platform) => {
+    if (platform && typeof platform.testEmailNotification === "function") {
+      return await platform.testEmailNotification();
     }
     return { success: false, message: "Platform nicht verfügbar" };
   };

@@ -52,10 +52,58 @@
         "maximum": 168,
         "description": "Wie viele Stunden zurück nach neuen Inhalten suchen (1-168)"
       },
+      "emailEnabled": {
+        "title": "E-Mail-Benachrichtigungen aktivieren",
+        "type": "boolean",
+        "default": false,
+        "description": "Sende Benachrichtigungen per E-Mail"
+      },
+      "emailSmtpHost": {
+        "title": "SMTP Server",
+        "type": "string",
+        "description": "SMTP Server (z.B. smtp.gmail.com)"
+      },
+      "emailSmtpPort": {
+        "title": "SMTP Port",
+        "type": "integer",
+        "default": 587,
+        "description": "SMTP Port (587 für TLS, 465 für SSL)"
+      },
+      "emailSmtpSecure": {
+        "title": "SMTP Secure (SSL)",
+        "type": "boolean",
+        "default": false,
+        "description": "Verwende SSL für SMTP-Verbindung"
+      },
+      "emailUser": {
+        "title": "E-Mail Benutzername",
+        "type": "string",
+        "description": "E-Mail-Adresse für SMTP-Authentifizierung"
+      },
+      "emailPassword": {
+        "title": "E-Mail Passwort",
+        "type": "string",
+        "description": "Passwort oder App-Passwort für E-Mail"
+      },
+      "emailFrom": {
+        "title": "Absender E-Mail",
+        "type": "string",
+        "description": "E-Mail-Adresse des Absenders"
+      },
+      "emailTo": {
+        "title": "Empfänger E-Mail",
+        "type": "string",
+        "description": "E-Mail-Adresse des Empfängers"
+      },
       "testNotification": {
         "title": "Test-Benachrichtigung",
         "type": "button",
         "description": "Sende eine Test-Benachrichtigung mit aktuellen Plex-Inhalten"
+      },
+      "testEmail": {
+        "title": "Test-E-Mail",
+        "type": "button",
+        "description": "Sende eine Test-E-Mail-Benachrichtigung"
       }
     },
     "required": ["platform", "name", "plexToken", "machineId"]
@@ -86,8 +134,22 @@
       "items": ["notificationTime", "hoursBack"]
     },
     {
+      "type": "fieldset",
+      "title": "E-Mail-Benachrichtigungen",
+      "expandable": true,
+      "expanded": false,
+      "items": ["emailEnabled", "emailSmtpHost", "emailSmtpPort", "emailSmtpSecure", "emailUser", "emailPassword", "emailFrom", "emailTo"]
+    },
+    {
       "type": "help",
-      "helpvalue": "<h6>🧪 Test-Benachrichtigung</h6><p>Um eine Test-Benachrichtigung zu senden, verwende den Switch <strong>\"Test Benachrichtigung\"</strong> in der Home App.</p><p><strong>💡 Tipp:</strong> Der Test-Switch wird automatisch erstellt und ist in der Home App verfügbar.</p>"
+      "helpvalue": "<h6>🧪 Test-Benachrichtigungen</h6><p>Um eine Test-Benachrichtigung zu senden, verwende den Switch <strong>\"Test Benachrichtigung\"</strong> in der Home App oder die Buttons unten.</p><p><strong>💡 Tipp:</strong> Der Test-Switch wird automatisch erstellt und ist in der Home App verfügbar.</p>"
+    },
+    {
+      "type": "fieldset",
+      "title": "Test-Funktionen",
+      "expandable": true,
+      "expanded": false,
+      "items": ["testNotification", "testEmail"]
     }
   ]
 }
