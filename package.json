@@ -55,7 +55,7 @@
     "pluginType": "platform",
     "singular": true,
     "childBridges": true,
-    "customUi": true,
+    "customUi": false,
     "platforms": [
       {
         "name": "PlexDailyRecommendations",

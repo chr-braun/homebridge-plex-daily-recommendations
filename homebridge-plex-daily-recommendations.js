@@ -169,6 +169,14 @@ class PlexDailyRecommendationsPlatform {
   }
 
   /**
+   * Homebridge UI API Handler - für Test-Funktionalität
+   */
+  async testNotificationAPI() {
+    this.log.info("🧪 Test-Benachrichtigung über Homebridge UI API ausgelöst...");
+    return await this.testNotification();
+  }
+
+  /**
    * Erstellt einen separaten Test-Switch als eigenes Accessory
    */
   createTestSwitchAccessory() {
@@ -667,6 +675,38 @@ module.exports = (api) => {
   module.exports.uiEvent = async (event, platform) => {
     if (platform && typeof platform.uiEvent === 'function') {
       return await platform.uiEvent(event);
+    }
+    return { success: false, message: "Platform nicht verfügbar" };
+  };
+  
+  // Exportiere Test-API für Homebridge UI
+  module.exports.testNotification = async (platform) => {
+    if (platform && typeof platform.testNotificationAPI === 'function') {
+      return await platform.testNotificationAPI();
+    }
+    return { success: false, message: "Platform nicht verfügbar" };
+  };
+  
+  // Exportiere Test-API für Homebridge UI (alternative Methode)
+  module.exports.testNotificationAPI = async (platform) => {
+    if (platform && typeof platform.testNotificationAPI === 'function') {
+      return await platform.testNotificationAPI();
+    }
+    return { success: false, message: "Platform nicht verfügbar" };
+  };
+  
+  // Exportiere Test-API für Homebridge UI (direkte Methode)
+  module.exports.testNotificationDirect = async (platform) => {
+    if (platform && typeof platform.testNotification === 'function') {
+      return await platform.testNotification();
+    }
+    return { success: false, message: "Platform nicht verfügbar" };
+  };
+  
+  // Exportiere Test-API für Homebridge UI (einfache Methode)
+  module.exports.test = async (platform) => {
+    if (platform && typeof platform.testNotification === 'function') {
+      return await platform.testNotification();
     }
     return { success: false, message: "Platform nicht verfügbar" };
   };
