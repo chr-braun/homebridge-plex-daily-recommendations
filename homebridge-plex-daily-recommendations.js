@@ -27,6 +27,7 @@ class PlexDailyRecommendationsPlatform {
     this.config = config;
     this.api = api;
     this.accessories = [];
+    this.sensorInstances = []; // Speichere Instanzen für Cleanup
 
     this.log.info("Plex Daily Recommendations Platform wird initialisiert...");
 
@@ -35,6 +36,16 @@ class PlexDailyRecommendationsPlatform {
       this.log.info("Homebridge fertig geladen, erstelle Accessory...");
       this.discoverDevices();
     });
+
+    // Shutdown-Handler für ordnungsgemäßes Cleanup
+    this.api.on("shutdown", () => {
+      this.log.info("Homebridge wird heruntergefahren, räume auf...");
+      this.sensorInstances.forEach((sensor) => {
+        if (sensor && sensor.destroy) {
+          sensor.destroy();
+        }
+      });
+    });
   }
 
   /**
@@ -42,6 +53,9 @@ class PlexDailyRecommendationsPlatform {
    */
   configureAccessory(accessory) {
     this.log.info("Lade gecachtes Accessory:", accessory.displayName);
+    // Lösche alte zirkuläre Referenzen aus dem Context
+    delete accessory.context.sensorInstance;
+    delete accessory.context.plexSensorConfigured;
     this.accessories.push(accessory);
   }
 
@@ -55,12 +69,15 @@ class PlexDailyRecommendationsPlatform {
     const existingAccessory = this.accessories.find((acc) => acc.UUID === uuid);
 
     if (existingAccessory) {
-      // Accessory existiert bereits, aktualisiere es
+      // Accessory existiert bereits, konfiguriere es neu
       this.log.info(
         "Verwende existierendes Accessory:",
         existingAccessory.displayName,
       );
-      new PlexSensorAccessory(this, existingAccessory, this.config);
+
+      // Erstelle neue PlexSensorAccessory Instanz und speichere für Cleanup
+      const sensor = new PlexSensorAccessory(this, existingAccessory, this.config);
+      this.sensorInstances.push(sensor);
     } else {
       // Erstelle neues Accessory
       this.log.info("Erstelle neues Accessory: Plex Empfehlungen");
@@ -69,7 +86,8 @@ class PlexDailyRecommendationsPlatform {
         uuid,
       );
 
-      new PlexSensorAccessory(this, accessory, this.config);
+      const sensor = new PlexSensorAccessory(this, accessory, this.config);
+      this.sensorInstances.push(sensor);
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
         accessory,
       ]);
@@ -160,9 +178,9 @@ class PlexSensorAccessory {
       `✓ Cron-Job konfiguriert für tägliche Benachrichtigungen um ${this.notificationTime}`,
     );
     this.log.info(
-      '✓ Test-Switch verfügbar in HomeKit: "Test Benachrichtigung"',
+      "✓ Test-Switch verfügbar in HomeKit: \"Test Benachrichtigung\"",
     );
-    cron.schedule(this.cronSchedule, () => this.sendDailyNotification());
+    this.cronJob = cron.schedule(this.cronSchedule, () => this.sendDailyNotification());
 
     this.occupancyDetected = false;
   }
@@ -214,20 +232,20 @@ class PlexSensorAccessory {
       );
     }
 
-    this.log("✓ Konfiguration erfolgreich validiert");
+    this.log.info("✓ Konfiguration erfolgreich validiert");
   }
 
   /**
    * Sendet tägliche Benachrichtigung über neue Inhalte
    */
   async sendDailyNotification() {
-    this.log("Führe tägliche Plex-Empfehlungsabfrage durch...");
+    this.log.info("Führe tägliche Plex-Empfehlungsabfrage durch...");
 
     try {
       const newContent = await this.getNewContent();
 
       if (newContent.length > 0) {
-        this.log(`✓ ${newContent.length} neue Inhalte gefunden!`);
+        this.log.info(`✓ ${newContent.length} neue Inhalte gefunden!`);
 
         // Benachrichtigung durch Accessory-Status-Änderung triggern
         this.occupancyDetected = true;
@@ -247,12 +265,12 @@ class PlexSensorAccessory {
 
         // Details loggen mit verbessertem Format
         newContent.forEach((item, index) => {
-          this.log(
+          this.log.info(
             `  ${index + 1}. ${item.title} (${item.type}) - hinzugefügt: ${item.addedAt}`,
           );
         });
       } else {
-        this.log(
+        this.log.info(
           `ℹ Keine neuen Inhalte in den letzten ${this.hoursBack} Stunden.`,
         );
       }
@@ -490,5 +508,16 @@ class PlexSensorAccessory {
 
   getOccupancyDetected() {
     return this.occupancyDetected;
+  }
+
+  /**
+   * Cleanup-Methode für ordnungsgemäße Freigabe von Ressourcen
+   */
+  destroy() {
+    if (this.cronJob) {
+      this.cronJob.destroy();
+      this.cronJob = null;
+    }
+    this.log.info("PlexSensorAccessory wurde ordnungsgemäß beendet");
   }
 }
